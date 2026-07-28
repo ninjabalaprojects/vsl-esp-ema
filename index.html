@@ -93,73 +93,6 @@
       margin: 0 auto;
     }
 
-    /* ── Overlay de urgência sobre o vídeo ── */
-    #video-overlay {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.92) 70%, transparent);
-      padding: 24px 20px 28px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      z-index: 10;
-      pointer-events: auto;
-    }
-
-    .overlay-text-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .overlay-text {
-      color: #fff;
-      font-size: clamp(14px, 3vw, 18px);
-      font-weight: 700;
-      line-height: 1.4;
-      text-align: left;
-      max-width: 260px;
-    }
-
-    .stop-icon {
-      width: 64px;
-      height: 64px;
-      flex-shrink: 0;
-    }
-
-    /* Botão CTA do overlay */
-    #btn-continue {
-      background: #e0001a;
-      color: #fff;
-      font-size: clamp(14px, 3vw, 18px);
-      font-weight: 900;
-      letter-spacing: 1px;
-      padding: 14px 36px;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      text-transform: uppercase;
-      box-shadow: 0 4px 18px rgba(224,0,26,0.45);
-      transition: transform 0.15s, box-shadow 0.15s;
-      position: relative;
-    }
-    #btn-continue:hover  { transform: scale(1.04); box-shadow: 0 6px 24px rgba(224,0,26,0.55); }
-    #btn-continue:active { transform: scale(0.98); }
-
-    /* Cursor animado */
-    .cursor-hint {
-      position: absolute;
-      right: -18px;
-      bottom: -6px;
-      font-size: 22px;
-      animation: cursor-bounce 0.9s ease-in-out infinite alternate;
-      pointer-events: none;
-    }
-    @keyframes cursor-bounce {
-      from { transform: translateX(0); }
-      to   { transform: translateX(6px); }
-    }
 
     /* ── Aviso anti-cópia visível ── */
     .security-notice {
@@ -200,26 +133,6 @@
   <div id="player-box">
     <vturb-smartplayer id="vid-6a62bc4997841b6683ee7172" style="display: block; margin: 0 auto; width: 100%; max-width: 400px;"><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 177.77777777777777% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer>
 
-    <!-- Overlay de urgência -->
-    <div id="video-overlay">
-      <div class="overlay-text-row">
-        <p class="overlay-text">Este video saldrá del aire pronto. Esta es tu última oportunidad de verlo hasta el final</p>
-        <svg class="stop-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <polygon points="29,4 71,4 96,29 96,71 71,96 29,96 4,71 4,29" fill="#e0001a" stroke="#fff" stroke-width="3"/>
-          <g fill="#fff">
-            <rect x="38" y="34" width="8" height="26" rx="4"/>
-            <rect x="48" y="30" width="8" height="30" rx="4"/>
-            <rect x="58" y="34" width="7" height="26" rx="3.5"/>
-            <rect x="28" y="42" width="12" height="22" rx="4"/>
-            <rect x="28" y="56" width="42" height="14" rx="7"/>
-          </g>
-        </svg>
-      </div>
-      <button id="btn-continue" onclick="dismissOverlay()">
-        SEGUIR VIENDO
-        <span class="cursor-hint">&#128070;</span>
-      </button>
-    </div><!-- /video-overlay -->
   </div><!-- /player-box -->
 
   <p class="security-notice">© Todos los derechos reservados. Contenido protegido.</p>
@@ -315,56 +228,7 @@
     el.textContent = day + '/' + month + '/' + year;
   })();
 
-  /* ── 2. OVERLAY — esconde após 3 s, pode ser dispensado ── */
-  var overlay = document.getElementById('video-overlay');
-  var vturbEl = document.getElementById('vid-6a62bc4997841b6683ee7172');
-  var overlayDismissed = false;
-
-  function hideOverlay() {
-    if (overlayDismissed) return;
-    overlayDismissed = true;
-    clearTimeout(overlayTimer);
-    if (overlay) {
-      overlay.style.display = 'none';
-      overlay.style.pointerEvents = 'none';
-    }
-    // Eleva o player Vturb acima de qualquer elemento da página
-    // garantindo que o botão CTA dele nunca seja bloqueado
-    if (vturbEl) vturbEl.style.zIndex = '99';
-  }
-
-  var overlayTimer = setTimeout(hideOverlay, 3000);
-
-  window.dismissOverlay = hideOverlay;
-
-  // Esconde o overlay assim que o vídeo Vturb começar a tocar
-  // (o CTA do Vturb é renderizado dentro do web component — precisa
-  //  estar livre de qualquer z-index externo no momento que aparece)
-  function attachVturbEvents() {
-    if (!vturbEl) return;
-
-    // Evento nativo do web component Vturb v4
-    vturbEl.addEventListener('play', hideOverlay);
-    vturbEl.addEventListener('smartplayer:play', hideOverlay);
-
-    // Fallback: polling até o smartplayer estar pronto e escuta via API interna
-    var pollSP = setInterval(function () {
-      var sp = vturbEl.smartplayer;
-      if (sp && typeof sp.on === 'function') {
-        clearInterval(pollSP);
-        sp.on('play', hideOverlay);
-        sp.on('cta-show', hideOverlay); // garante que o CTA nunca seja tapado
-      }
-    }, 300);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', attachVturbEvents);
-  } else {
-    attachVturbEvents();
-  }
-
-  /* ── 3. BLOQUEAR CLIQUE DIREITO ── */
+  /* ── 2. BLOQUEAR CLIQUE DIREITO ── */
   document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
   /* ── 4. BLOQUEAR ATALHOS DE TECLADO ── */
