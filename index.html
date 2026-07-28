@@ -85,47 +85,12 @@
       margin-bottom: 28px;
     }
 
-    /* ── Player wrapper ── */
-    .player-outer {
+    /* ── Player wrapper — envolve o embed nativo do Vturb + overlay ── */
+    #player-box {
       position: relative;
       width: 100%;
-      max-width: 520px;
+      max-width: 400px;
       margin: 0 auto;
-      background: #000;
-      border-radius: 4px;
-      overflow: hidden;
-      /* Bloquear prints de tela via CSS (suporte limitado) */
-      -webkit-print-color-adjust: exact;
-    }
-
-    /* Aspect ratio 9:16 para VSL vertical */
-    .player-inner {
-      position: relative;
-      width: 100%;
-      padding-top: 177.78%; /* 16:9 invertido → 9:16 */
-    }
-
-    .player-inner iframe,
-    .player-inner video,
-    #vturb-embed {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      border: none;
-    }
-
-    /* Vturb smartplayer — preenche o container absoluto */
-    .player-inner vturb-smartplayer {
-      position: absolute !important;
-      top: 0 !important; left: 0 !important;
-      width: 100% !important; height: 100% !important;
-      max-width: none !important;
-      margin: 0 !important;
-      z-index: 1; /* eleva para 99 via JS após overlay sumir */
-    }
-    .player-inner vturb-smartplayer .vturb-player-placeholder {
-      padding: 0 !important;
-      height: 100% !important;
     }
 
     /* ── Overlay de urgência sobre o vídeo ── */
@@ -139,7 +104,7 @@
       align-items: center;
       gap: 16px;
       z-index: 10;
-      /* Inicia visível; JS controla exibição após X segundos */
+      pointer-events: auto;
     }
 
     .overlay-text-row {
@@ -231,50 +196,31 @@
   </h1>
   <p class="sub-headline">(no es dieta ni gimnasio)</p>
 
-  <!-- Player Vturb -->
-  <div class="player-outer" id="player-box">
-    <div class="player-inner">
+  <!-- Player Vturb — embed exatamente como fornecido pelo painel -->
+  <div id="player-box">
+    <vturb-smartplayer id="vid-6a62bc4997841b6683ee7172" style="display: block; margin: 0 auto; width: 100%; max-width: 400px;"><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 177.77777777777777% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer>
 
-      <!--
-        ╔══════════════════════════════════════════╗
-        ║  SUBSTITUA O BLOCO ABAIXO PELO EMBED     ║
-        ║  FORNECIDO PELO VTURB NO SEU PAINEL.     ║
-        ║                                          ║
-        ║  Exemplo:                                ║
-        ║  <div id="vid_XXXXXXXXXXXXXXXXXXXXXXXX"> ║
-        ║  </div>                                  ║
-        ║  <script src="https://scripts.converteai ║
-        ║  .net/.../.../player.js" async></script> ║
-        ╚══════════════════════════════════════════╝
-      -->
-      <vturb-smartplayer id="vid-6a62bc4997841b6683ee7172"><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 177.77777777777777% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer>
-
-      <!-- Overlay de urgência -->
-      <div id="video-overlay">
-        <div class="overlay-text-row">
-          <p class="overlay-text">Este video saldrá del aire pronto. Esta es tu última oportunidad de verlo hasta el final</p>
-          <!-- Ícone de STOP em SVG inline (sem depender de CDN externo) -->
-          <svg class="stop-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <polygon points="29,4 71,4 96,29 96,71 71,96 29,96 4,71 4,29" fill="#e0001a" stroke="#fff" stroke-width="3"/>
-            <g fill="#fff">
-              <!-- Palm -->
-              <rect x="38" y="34" width="8" height="26" rx="4"/>
-              <rect x="48" y="30" width="8" height="30" rx="4"/>
-              <rect x="58" y="34" width="7" height="26" rx="3.5"/>
-              <rect x="28" y="42" width="12" height="22" rx="4"/>
-              <rect x="28" y="56" width="42" height="14" rx="7"/>
-            </g>
-          </svg>
-        </div>
-
-        <button id="btn-continue" onclick="dismissOverlay()">
-          SEGUIR VIENDO
-          <span class="cursor-hint">&#128070;</span>
-        </button>
-      </div><!-- /video-overlay -->
-
-    </div><!-- /player-inner -->
-  </div><!-- /player-outer -->
+    <!-- Overlay de urgência -->
+    <div id="video-overlay">
+      <div class="overlay-text-row">
+        <p class="overlay-text">Este video saldrá del aire pronto. Esta es tu última oportunidad de verlo hasta el final</p>
+        <svg class="stop-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <polygon points="29,4 71,4 96,29 96,71 71,96 29,96 4,71 4,29" fill="#e0001a" stroke="#fff" stroke-width="3"/>
+          <g fill="#fff">
+            <rect x="38" y="34" width="8" height="26" rx="4"/>
+            <rect x="48" y="30" width="8" height="30" rx="4"/>
+            <rect x="58" y="34" width="7" height="26" rx="3.5"/>
+            <rect x="28" y="42" width="12" height="22" rx="4"/>
+            <rect x="28" y="56" width="42" height="14" rx="7"/>
+          </g>
+        </svg>
+      </div>
+      <button id="btn-continue" onclick="dismissOverlay()">
+        SEGUIR VIENDO
+        <span class="cursor-hint">&#128070;</span>
+      </button>
+    </div><!-- /video-overlay -->
+  </div><!-- /player-box -->
 
   <p class="security-notice">© Todos los derechos reservados. Contenido protegido.</p>
 
