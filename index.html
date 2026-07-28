@@ -118,6 +118,7 @@
       width: 100% !important; height: 100% !important;
       max-width: none !important;
       margin: 0 !important;
+      z-index: 1; /* eleva para 99 via JS após overlay sumir */
     }
     .player-inner vturb-smartplayer .vturb-player-placeholder {
       padding: 0 !important;
@@ -297,14 +298,52 @@
 
   /* ── 2. OVERLAY — esconde após 3 s, pode ser dispensado ── */
   var overlay = document.getElementById('video-overlay');
-  var overlayTimer = setTimeout(function () {
-    if (overlay) overlay.style.display = 'none';
-  }, 3000);
+  var vturbEl = document.getElementById('vid-6a62bc4997841b6683ee7172');
+  var overlayDismissed = false;
 
-  window.dismissOverlay = function () {
+  function hideOverlay() {
+    if (overlayDismissed) return;
+    overlayDismissed = true;
     clearTimeout(overlayTimer);
-    if (overlay) overlay.style.display = 'none';
-  };
+    if (overlay) {
+      overlay.style.display = 'none';
+      overlay.style.pointerEvents = 'none';
+    }
+    // Eleva o player Vturb acima de qualquer elemento da página
+    // garantindo que o botão CTA dele nunca seja bloqueado
+    if (vturbEl) vturbEl.style.zIndex = '99';
+  }
+
+  var overlayTimer = setTimeout(hideOverlay, 3000);
+
+  window.dismissOverlay = hideOverlay;
+
+  // Esconde o overlay assim que o vídeo Vturb começar a tocar
+  // (o CTA do Vturb é renderizado dentro do web component — precisa
+  //  estar livre de qualquer z-index externo no momento que aparece)
+  function attachVturbEvents() {
+    if (!vturbEl) return;
+
+    // Evento nativo do web component Vturb v4
+    vturbEl.addEventListener('play', hideOverlay);
+    vturbEl.addEventListener('smartplayer:play', hideOverlay);
+
+    // Fallback: polling até o smartplayer estar pronto e escuta via API interna
+    var pollSP = setInterval(function () {
+      var sp = vturbEl.smartplayer;
+      if (sp && typeof sp.on === 'function') {
+        clearInterval(pollSP);
+        sp.on('play', hideOverlay);
+        sp.on('cta-show', hideOverlay); // garante que o CTA nunca seja tapado
+      }
+    }, 300);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachVturbEvents);
+  } else {
+    attachVturbEvents();
+  }
 
   /* ── 3. BLOQUEAR CLIQUE DIREITO ── */
   document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
