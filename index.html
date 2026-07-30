@@ -156,6 +156,40 @@
 (function () {
   'use strict';
 
+  /* ── 0. META PIXEL EVENTS ── */
+  (function () {
+    if (typeof fbq !== 'function') return;
+
+    // ViewContent — dispara uma vez quando o vídeo Vturb começa a tocar
+    var viewContentFired = false;
+    var vturbEl = document.getElementById('vid-6a62bc4997841b6683ee7172');
+
+    function fireViewContent() {
+      if (viewContentFired) return;
+      viewContentFired = true;
+      fbq('track', 'ViewContent');
+    }
+
+    if (vturbEl) {
+      vturbEl.addEventListener('play', fireViewContent);
+      vturbEl.addEventListener('smartplayer:play', fireViewContent);
+      var poll = setInterval(function () {
+        var sp = vturbEl.smartplayer;
+        if (sp && typeof sp.on === 'function') {
+          clearInterval(poll);
+          sp.on('play', fireViewContent);
+        }
+      }, 300);
+    }
+
+    // InitiateCheckout — dispara quando o Vturb abre o checkout via window.open
+    var _origOpen = window.open;
+    window.open = function (url, target, features) {
+      fbq('track', 'InitiateCheckout');
+      return _origOpen.call(this, url, target, features);
+    };
+  })();
+
   /* ── 1. DATA DINÂMICA na barra de urgência ── */
   (function setDeadline() {
     var el = document.getElementById('deadline-date');
